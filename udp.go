@@ -177,10 +177,10 @@ func udpRemote(addr string, shadow func(net.PacketConn) net.PacketConn) {
 type natmap struct {
 	sync.RWMutex
 	m       map[string]net.PacketConn
-	timeout time.Duration
+	timeout Duration
 }
 
-func newNATmap(timeout time.Duration) *natmap {
+func newNATmap(timeout Duration) *natmap {
 	m := &natmap{}
 	m.m = make(map[string]net.PacketConn)
 	m.timeout = timeout
@@ -224,11 +224,11 @@ func (m *natmap) Add(peer net.Addr, dst, src net.PacketConn, role mode) {
 }
 
 // copy from src to dst at target with read timeout
-func timedCopy(dst net.PacketConn, target net.Addr, src net.PacketConn, timeout time.Duration, role mode) error {
+func timedCopy(dst net.PacketConn, target net.Addr, src net.PacketConn, timeout Duration, role mode) error {
 	buf := make([]byte, udpBufSize)
 
 	for {
-		src.SetReadDeadline(time.Now().Add(timeout))
+		src.SetReadDeadline(time.Now().Add(timeout.Duration))
 		n, raddr, err := src.ReadFrom(buf)
 		if err != nil {
 			return err

@@ -1,0 +1,21 @@
+{
+  "client": "192.168.2.235",
+  "server": "192.168.2.235",
+  "cipher": "192.168.2.235",
+  "key": "192.168.2.235",
+  "password": "192.168.2.235",
+  "keygen": 10,
+  "socks": "192.168.2.235",
+  "redir_tcp": "192.168.2.235",
+  "redir_tcp_6": "192.168.2.235",
+  "tcp_tun": "192.168.2.235",
+  "udp_tun": "192.168.2.235",
+  "udp_socks": true,
+  "udp": true,
+  "tcp": false,
+  "plugin": "192.168.2.235",
+  "plugin_opts": "192.168.2.235",
+  "verbose": true,
+  "udp_timeout": "1h",
+  "tcp_cork": false
+}
