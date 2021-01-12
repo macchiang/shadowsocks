@@ -17,12 +17,12 @@ import (
 )
 
 func main() {
+	var flags *Configure
 
 	var filePath = flag.String("path", "/etc/shadowsocks/conf.configure.json", "shadowsocks configure file path")
 	flag.Parse()
-	flags := loadConfigure(*filePath)
 
-	if flags == nil {
+	if flags = loadConfigure(*filePath); flags == nil {
 		return
 	}
 
