@@ -48,8 +48,8 @@ func tcpLocal(addr, server string, shadow func(net.Conn) net.Conn, getAddr func(
 		go func() {
 			defer c.Close()
 			tgt, err := getAddr(c)
-			if err != nil {
 
+			if err != nil {
 				// UDP: keep the connection until disconnect then free the UDP socket
 				if err == socks.InfoUDPAssociate {
 					buf := make([]byte, 1)

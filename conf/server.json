@@ -1,0 +1,21 @@
+{
+  "client": "",
+  "server": "ss://AEAD_CHACHA20_POLY1305:12345@192.168.0.104:8488",
+  "cipher": "AEAD_CHACHA20_POLY1305",
+  "key": "",
+  "password": "",
+  "keygen": 0,
+  "socks": "",
+  "redir_tcp": "",
+  "redir_tcp_6": "",
+  "tcp_tun": "",
+  "udp_tun": "",
+  "udp_socks": false,
+  "udp": false,
+  "tcp": true,
+  "plugin": "",
+  "plugin_opts": "",
+  "verbose": true,
+  "udp_timeout": "1s",
+  "tcp_cork": false
+}

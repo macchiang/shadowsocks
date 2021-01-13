@@ -19,7 +19,7 @@ import (
 func main() {
 	var flags *Configure
 
-	var filePath = flag.String("path", "/etc/shadowsocks/conf.configure.json", "shadowsocks configure file path")
+	var filePath = flag.String("path", "/etc/shadowsocks/conf.client.json", "shadowsocks configure file path")
 	flag.Parse()
 
 	if flags = loadConfigure(*filePath); flags == nil {
