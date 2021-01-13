@@ -10,7 +10,7 @@
   "redir_tcp_6": "192.168.2.235",
   "tcp_tun": "192.168.2.235",
   "udp_tun": "192.168.2.235",
-  "udp_socks": true,
+  "udp_socks": false,
   "udp": true,
   "tcp": false,
   "plugin": "192.168.2.235",
