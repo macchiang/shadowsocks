@@ -14,10 +14,10 @@
 
 本教程主要会从以下四个问题入手：
 
-1. [什么是隧道代理？](# 什么是隧道代理？)
-2. [本教程的实验环境是什么样的？实现本教程中的示例都需要提前准备哪些条件？](#2.本教程的实验环境是什么样的？实现本教程中的示例都需要提前准备哪些条件？)
-3. [Shadowsocks是如何实现隧道代理的？](#3.Shadowsocks是如何实现隧道代理的？)
-4. [我们可以学习到哪些技术点？](#4.我们可以学习到哪些技术点？)
+1. 什么是隧道代理？
+2. 本教程的实验环境是什么样的？实现本教程中的示例都需要提前准备哪些条件？
+3. Shadowsocks是如何实现隧道代理的？
+4. 我们可以学习到哪些技术点？
 
 ## 1. 什么是隧道代理？
 
@@ -244,6 +244,80 @@ func readAddr(r io.Reader, b []byte) (Addr, error) {
 我们可以通过这段代码看出，我们可以通过buf中的第一位判断IP地址的类型，然后根据不同类型的IP来截取buf中对应长度的内容就可以获得IP地址了。
 
 ### 3.4 数据流的转发是如何实现的
-
+我们来看一下tcp.go文件中的``repaly()``函数。
+```golang
+func relay(left, right net.Conn) error {
+	var err, err1 error
+	var wg sync.WaitGroup
+	var wait = 5 * time.Second
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		_, err1 = io.Copy(right, left)
+		right.SetReadDeadline(time.Now().Add(wait)) // unblock read on right
+	}()
+	_, err = io.Copy(left, right)
+	left.SetReadDeadline(time.Now().Add(wait)) // unblock read on left
+	wg.Wait()
+	if err1 != nil && !errors.Is(err1, os.ErrDeadlineExceeded) { // requires Go 1.15+
+		return err1
+	}
+	if err != nil && !errors.Is(err, os.ErrDeadlineExceeded) {
+		return err
+	}
+	return nil
+}
+```
+本教程中最关键的代码而就是``io.Copy()``函数，这就是代理的核心，代理的本质，是转发两个相同方向路径上的stream(数据流)。
+再看一下``io.Copy(）``的源码：
+```golang
+func Copy(dst Writer, src Reader) (written int64, err error) {
+	// If the reader has a WriteTo method, use it to do the copy.
+	// Avoids an allocation and a copy.
+	if wt, ok := src.(WriterTo); ok {
+		return wt.WriteTo(dst)
+	}
+	// Similarly, if the writer has a ReadFrom method, use it to do the copy.
+	if rt, ok := dst.(ReaderFrom); ok {
+		return rt.ReadFrom(src)
+	}
+	buf := make([]byte, 32*1024)
+	for {
+		nr, er := src.Read(buf)
+		if nr > 0 {
+			nw, ew := dst.Write(buf[0:nr])
+			if nw > 0 {
+				written += int64(nw)
+			}
+			if ew != nil {
+				err = ew
+				break
+			}
+			if nr != nw {
+				err = ErrShortWrite
+				break
+			}
+		}
+		if er == EOF {
+			break
+		}
+		if er != nil {
+			err = er
+			break
+		}
+	}
+	return written, err
+```
+阻塞式的从src输入流读数据到dst输出流。由于``io.Copy()``是阻塞式的复制，所以我们需要使用到协程来提高程序的运行效率。
 ## 4. 我们可以学习到哪些技术点？
+最后，我总结一下通过解析shadowsockets源码学习到的技术点有以下3点：
+1. 可以通过将目的端IP写入数据流中的方式让服务端知道目的IP；
+2. 在golang中可以通过io.Copy()函数实现流量的转发
+3. 遇到阻塞式函数的时候为了避免程序阻塞可以使用go routine的方式讲阻塞函数单独放到一个协程中；
+4. ``sync.WaitGroup``函数的优点是Wait()可以阻塞到队列中的所有任务都执行完才解除阻塞
+
+—--
+欢迎关注我的公众号，不定期分析技术好文。
+
+![](https://w910820618-1253988311.cos.ap-beijing.myqcloud.com/%E5%9B%BE%E7%89%87/%E5%BE%AE%E4%BF%A1%E5%85%AC%E4%BC%97%E5%8F%B7/qrcode_for_gh_4afc5ec351d9_258.jpg)
 
