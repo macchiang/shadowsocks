@@ -316,7 +316,8 @@ func Copy(dst Writer, src Reader) (written int64, err error) {
 3. 遇到阻塞式函数的时候为了避免程序阻塞可以使用go routine的方式讲阻塞函数单独放到一个协程中；
 4. ``sync.WaitGroup``函数的优点是Wait()可以阻塞到队列中的所有任务都执行完才解除阻塞
 
-—--
+---
+
 欢迎关注我的公众号，不定期分析技术好文。
 
 ![](https://w910820618-1253988311.cos.ap-beijing.myqcloud.com/%E5%9B%BE%E7%89%87/%E5%BE%AE%E4%BF%A1%E5%85%AC%E4%BC%97%E5%8F%B7/qrcode_for_gh_4afc5ec351d9_258.jpg)
