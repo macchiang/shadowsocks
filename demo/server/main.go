@@ -69,7 +69,7 @@ func main() {
 				// see https://www.ndss-symposium.org/ndss-paper/detecting-probe-resistant-proxies/
 				return
 			}
-			log.Println("target ip" + tgt.String() + "\n")
+			log.Println("target ip :" + tgt.String() + "\n")
 			rc, err := net.Dial("tcp", tgt.String())
 			if err != nil {
 				log.Fatalf("failed to connect to target: %v", err)
