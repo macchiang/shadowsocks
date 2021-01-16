@@ -6,6 +6,10 @@
 
 欢迎转载，转载请标注 ：**洲洋的编程课堂**。
 
+本教程的Youtube视频在：https://youtube.com/playlist?list=PLRwNnzR6FpVVBs2uYVV_ivZJnfrYAj0GP
+
+本教程的B站视频在：https://www.bilibili.com/video/BV1sy4y1H7KC/
+
 ---
 
 本教程是基于 **github.com/shadowsocks/go-shadowsocks2**项目，我将通过分析该项目的源码来帮助大家学习如何通过Golang来实现一个隧道代理转发工具。
