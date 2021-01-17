@@ -169,7 +169,7 @@ if flags.TCPTun != "" {
 
 接着我们看tcp.go中的**tcpTun**函数：
 
-```
+```golang
 func tcpTun(addr, server, target string, shadow func(net.Conn) net.Conn) {
 	tgt := socks.ParseAddr(target)
 	if tgt == nil {
@@ -185,7 +185,7 @@ func tcpTun(addr, server, target string, shadow func(net.Conn) net.Conn) {
 
 **在golang中可以把函数作为一种类型，并且可以把函数作为参数进行传递**。
 
-```
+```golang
 func(net.Conn) (socks.Addr, error) {
       return tgt, nil 
 }
