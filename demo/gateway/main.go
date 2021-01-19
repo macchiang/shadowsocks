@@ -13,7 +13,7 @@ var local = flag.String("local", "", "please enter monitor ip, example: 192.168.
 var target = flag.String("target", "", "please enter target ip, example : 192.168.1.105:8806")
 
 func main() {
-
+	flag.Parse()
 	l, err := net.Listen("tcp", *local)
 	if err != nil {
 		fmt.Println(err, err.Error())

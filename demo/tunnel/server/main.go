@@ -93,10 +93,10 @@ func relay(left, right net.Conn) error {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		_, err1 = io.Copy(right, left)
+		_, err1 = SecureCopy(right, left)
 		right.SetReadDeadline(time.Now().Add(wait)) // unblock read on right
 	}()
-	_, err = io.Copy(left, right)
+	_, err = SecureCopy(left, right)
 	left.SetReadDeadline(time.Now().Add(wait)) // unblock read on left
 	wg.Wait()
 	if err1 != nil && !errors.Is(err1, os.ErrDeadlineExceeded) { // requires Go 1.15+
@@ -139,4 +139,33 @@ func readAddr(r io.Reader, b []byte) (Addr, error) {
 	}
 
 	return nil, err
+}
+
+func SecureCopy(src io.ReadWriteCloser, dst io.ReadWriteCloser) (written int64, err error) {
+	size := 1024
+	buf := make([]byte, size)
+	for {
+		nr, er := src.Read(buf)
+		if nr > 0 {
+			nw, ew := dst.Write(buf[0:nr])
+			if nw > 0 {
+				written += int64(nw)
+			}
+			if ew != nil {
+				err = ew
+				break
+			}
+			if nr != nw {
+				err = io.ErrShortWrite
+				break
+			}
+		}
+		if er != nil {
+			if er != io.EOF {
+				err = er
+			}
+			break
+		}
+	}
+	return written, err
 }

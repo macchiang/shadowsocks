@@ -22,12 +22,13 @@ const (
 )
 
 var local = flag.String("local", "127.0.0.1:1080", "please enter local proxy ip")
+
 var target = flag.String("target", "192.168.1.105:8806", "please enter target server ip")
 var server = flag.String("server", "192.168.0.104:8805", "please enter tcp tunnel server ip")
 
 func main() {
 	flag.Parse()
-	tgt := ParseAddr(*target)
+	//tgt := ParseAddr(*target)
 	l, err := net.Listen("tcp", *local)
 	if err != nil {
 		log.Fatalf("failed to listen on %s: %v", *local, err)
@@ -42,12 +43,14 @@ func main() {
 
 	for {
 		c, err := l.Accept()
+
 		if err != nil {
 			continue
 		}
 
 		go func() {
 
+			tgt := ParseAddr(*target)
 			rc, err := net.Dial("tcp", *server)
 			if err != nil {
 				log.Fatal("can't connect " + *server)
@@ -65,6 +68,7 @@ func main() {
 			if err = relay(rc, c); err != nil {
 				log.Fatal(err.Error() + "\n")
 			}
+
 		}()
 
 	}
@@ -78,10 +82,10 @@ func relay(left, right net.Conn) error {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		_, err1 = io.Copy(right, left)
+		_, err1 = SecureCopy(right, left)
 		right.SetReadDeadline(time.Now().Add(wait)) // unblock read on right
 	}()
-	_, err = io.Copy(left, right)
+	_, err = SecureCopy(left, right)
 	left.SetReadDeadline(time.Now().Add(wait)) // unblock read on left
 	wg.Wait()
 	if err1 != nil && !errors.Is(err1, os.ErrDeadlineExceeded) { // requires Go 1.15+
@@ -128,4 +132,33 @@ func ParseAddr(s string) Addr {
 	addr[len(addr)-2], addr[len(addr)-1] = byte(portnum>>8), byte(portnum)
 
 	return addr
+}
+
+func SecureCopy(src io.ReadWriteCloser, dst io.ReadWriteCloser) (written int64, err error) {
+	size := 1024
+	buf := make([]byte, size)
+	for {
+		nr, er := src.Read(buf)
+		if nr > 0 {
+			nw, ew := dst.Write(buf[0:nr])
+			if nw > 0 {
+				written += int64(nw)
+			}
+			if ew != nil {
+				err = ew
+				break
+			}
+			if nr != nw {
+				err = io.ErrShortWrite
+				break
+			}
+		}
+		if er != nil {
+			if er != io.EOF {
+				err = er
+			}
+			break
+		}
+	}
+	return written, err
 }
