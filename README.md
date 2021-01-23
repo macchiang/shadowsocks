@@ -10,6 +10,8 @@
 
 本教程的B站视频在：https://www.bilibili.com/video/BV1sy4y1H7KC/
 
+参考项目：https://github.com/shikanon/socks5proxy
+
 ---
 
 本教程是基于 **github.com/shadowsocks/go-shadowsocks2**项目，我将通过分析该项目的源码来帮助大家学习如何通过Golang来实现一个隧道代理转发工具。

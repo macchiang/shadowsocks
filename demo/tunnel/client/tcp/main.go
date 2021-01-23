@@ -1,16 +1,16 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"log"
 	"net"
+	"net/url"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
-	"time"
 )
 
 type Addr []byte
@@ -23,7 +23,7 @@ const (
 
 var local = flag.String("local", "127.0.0.1:1080", "please enter local proxy ip")
 
-var target = flag.String("target", "192.168.1.105:8806", "please enter target server ip")
+//var target = flag.String("target", "192.168.1.105:8806", "please enter target server ip")
 var server = flag.String("server", "192.168.0.104:8805", "please enter tcp tunnel server ip")
 
 func main() {
@@ -48,53 +48,83 @@ func main() {
 			continue
 		}
 
+		wg := new(sync.WaitGroup)
+		wg.Add(2)
+
 		go func() {
 
-			tgt := ParseAddr(*target)
+			target, localReq := GetRemoteIP(c)
+
+			tgt := ParseAddr(target)
 			rc, err := net.Dial("tcp", *server)
 			if err != nil {
 				log.Fatal("can't connect " + *server)
 				c.Write([]byte("can't connect " + *server))
 				c.Close()
-
 			}
 
+			// 发送目的IP地址
 			if _, err = rc.Write(tgt); err != nil {
 				log.Fatal("failed to send target address: ", err.Error()+"\n")
 				return
 			}
 
-			log.Println("proxy " + c.RemoteAddr().String() + "<->" + *server + "<->" + *target)
-			if err = relay(rc, c); err != nil {
-				log.Fatal(err.Error() + "\n")
-			}
+			// 转发数据
+			log.Println("proxy " + c.RemoteAddr().String() + "<->" + *server + "<->" + target)
+			go func() {
+				defer wg.Done()
+				rc.Write(localReq)
+				// SecureCopy(localClient, dstServer, auth.Encrypt)
+			}()
+
+			go func() {
+				defer wg.Done()
+				SecureCopy(rc, c)
+			}()
 
 		}()
 
 	}
 }
 
-// 数据流的转发
-func relay(left, right net.Conn) error {
-	var err, err1 error
-	var wg sync.WaitGroup
-	var wait = 5 * time.Second
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		_, err1 = SecureCopy(right, left)
-		right.SetReadDeadline(time.Now().Add(wait)) // unblock read on right
-	}()
-	_, err = SecureCopy(left, right)
-	left.SetReadDeadline(time.Now().Add(wait)) // unblock read on left
-	wg.Wait()
-	if err1 != nil && !errors.Is(err1, os.ErrDeadlineExceeded) { // requires Go 1.15+
-		return err1
+func GetRemoteIP(localClient net.Conn) (string, []byte) {
+	buff := make([]byte, 1024)
+
+	n, err := localClient.Read(buff)
+	if err != nil {
+		log.Print(err)
 	}
-	if err != nil && !errors.Is(err, os.ErrDeadlineExceeded) {
-		return err
+	localReq := buff[:n]
+	j := 0
+	z := 0
+	httpreq := []string{}
+	for i := 0; i < n; i++ {
+		if buff[i] == 32 {
+			httpreq = append(httpreq, string(buff[j:i]))
+			j = i + 1
+		}
+		if buff[i] == 10 {
+			z += 1
+		}
 	}
-	return nil
+
+	dstURI, err := url.ParseRequestURI(httpreq[1])
+	if err != nil {
+		log.Print(err)
+	}
+	var dstAddr string
+	var dstPort = "80"
+	dstAddrPort := strings.Split(dstURI.Host, ":")
+	if len(dstAddrPort) == 1 {
+		dstAddr = dstAddrPort[0]
+	} else if len(dstAddrPort) == 2 {
+		dstAddr = dstAddrPort[0]
+		dstPort = dstAddrPort[1]
+	} else {
+		log.Print("URL parse error!")
+	}
+
+	return fmt.Sprintf("%s:%s", dstAddr, dstPort), localReq
 }
 
 // 将string类型的IP地址转换成[]byte类型
