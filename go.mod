@@ -5,7 +5,7 @@ go 1.15
 require (
 	github.com/riobard/go-bloom v0.0.0-20200614022211-cdc8013cb5b3
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
-	golang.org/x/sys v0.0.0-20200824131525-c12d262b63d8 // indirect
+	golang.org/x/sys v0.1.0 // indirect
 )
 
 replace (
